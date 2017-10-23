@@ -1,11 +1,7 @@
 import numpy
-import ctadata as cd
+import from hipecta.data import ctaloadfiles as cd
 
-# Will become:
-# from hipecta import ctaloadfiles
-# from hipecta.ctaloadfiles import load_ctafile
-
-from ctaDataWrapper import PCalibRun
+from hipecta.data import PCalibRun
 
 
 def load_calibrated_prun(filename):
@@ -41,8 +37,7 @@ def extract_images_telescope(pcalibrun_filename, telescope_type):
     pr = PCalibRun()
     pr.load(pcalibrun_filename)
 
-    return np.array([event.tabPixel for tel in pr.tabTelescope for event in tel.tabTelEvent if tel.telescopeType == telescope_type])
-
+    return np.array([event.tabPixel for tel in pr.tabTelescope if tel.telescopeType == telescope_type for event in tel.tabTelEvent])
 
 
 

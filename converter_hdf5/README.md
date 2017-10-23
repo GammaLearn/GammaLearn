@@ -3,7 +3,7 @@
 
 
 ____
---TODO list--
+**TODO list**
 
 - function to extract different kinds of selected images from prun files
     - telescope
@@ -22,7 +22,7 @@ ____
 
 
 ____
---HF5 files structure:--  
+**HDF5 files structure:**  
 
 1 file = 1 particle type
 

@@ -273,6 +273,8 @@ def energyband_extractor(pcalibrun_filename, psimu_filename, emin, emax):
 	-------
 
 	"""
+
+# Example of use. Need to define the way to get the file names
 pruncalibfilename = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/gamma_20deg_0deg_run4514___cta-prod3_desert-2150m-Paranal-merged.pcalibRun'
 simufilename = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/gamma_20deg_0deg_run4514___cta-prod3_desert-2150m-Paranal-merged.psimu'
 hdf5filename = '/home/jacquemont/projets_CTA/gamma.hdf5'

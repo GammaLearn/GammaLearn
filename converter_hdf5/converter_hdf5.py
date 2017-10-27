@@ -115,20 +115,15 @@ def CTAToHdf5(pr, ps, hdf5filename, telescopeTypeDict):
 		# Telescope data
 		for telType in telescopeType:
 			telGrp = {}
-			#telGrp["group"] = gammaHdf[telescopeTypeDict[telType]]
 			group = telescopeTypeDict[telType]
 			telGrp["showerId"] = gammaHdf[group + '/showerId']
 			telGrp["showerId"] = addDataToDataset(telGrp["showerId"], telDict[telType]['showerId'])
 			telGrp["images"] = gammaHdf[group + '/images']
 			telGrp["images"] = addDataToDataset(telGrp["images"], telDict[telType]['images'])
-			#telGrp["pixelsPosition"] = gammaHdf[group + '/pixelsPosition']
 			telGrp["eventId"] = gammaHdf[group + '/eventId']
 			telGrp["eventId"] = addDataToDataset(telGrp["eventId"], telDict[telType]['eventId'])
 			telGrp["telescopeId"] = gammaHdf[group + '/telescopeId']
 			telGrp["telescopeId"] = addDataToDataset(telGrp["telescopeId"], telDict[telType]['telescopeId'])
-			#telGrp["injTable"] = gammaHdf[group + '/injTable']
-			#telGrp["nbRow"] = gammaHdf[group + '/nbRow']
-			#telGrp["nbCol"] = gammaHdf[group + '/nbCol']
 			hdf5StuctureDict[telType] = telGrp
 		# Shower simulation data
 		#showerSimuGrp = gammaHdf.create_group("showerSimu")
@@ -176,40 +171,40 @@ def CTAToHdf5(pr, ps, hdf5filename, telescopeTypeDict):
 		for telType in telescopeType:
 			telGrp = {}
 			telGrp["group"] = gammaHdf.create_group(telescopeTypeDict[telType])
-			telGrp["showerId"] = telGrp["group"].create_dataset("showerId",data=telDict[telType]['showerId'], maxshape=(None,1),dtype=np.uint64)
+			telGrp["group"].create_dataset("showerId",data=telDict[telType]['showerId'], maxshape=(None,1),dtype=np.uint64)
 			maxshape = (None,) + telDict[telType]['images'].shape[1:]
-			telGrp["images"] = telGrp["group"].create_dataset("images",data=telDict[telType]['images'], maxshape=maxshape,dtype=np.float32)
-			telGrp["pixelsPosition"] = telGrp["group"].create_dataset("pixelsPosition",data=telDict[telType]['pixelsPosition'],dtype=np.float32)
-			telGrp["eventId"] = telGrp["group"].create_dataset("eventId",data=telDict[telType]['eventId'],maxshape=(None,),dtype=np.uint64)
-			telGrp["telescopeId"] = telGrp["group"].create_dataset("telescopeId",data=telDict[telType]['telescopeId'],maxshape=(None,),dtype=np.uint64)
-			telGrp["injTable"] = telGrp["group"].create_dataset("injTable",data=telDict[telType]['injTable'],dtype=np.uint64)
-			telGrp["nbRow"] = telGrp["group"].create_dataset("nbRow",data=telDict[telType]['nbRow'],dtype=np.int8)
-			telGrp["nbCol"] = telGrp["group"].create_dataset("nbCol",data=telDict[telType]['nbCol'],dtype=np.int8)
+			telGrp["group"].create_dataset("images",data=telDict[telType]['images'], maxshape=maxshape,dtype=np.float32)
+			telGrp["group"].create_dataset("eventId",data=telDict[telType]['eventId'],maxshape=(None,),dtype=np.uint64)
+			telGrp["group"].create_dataset("telescopeId",data=telDict[telType]['telescopeId'],maxshape=(None,),dtype=np.uint64)
+			telGrp["group"].attrs["pixelsPosition"]=telDict[telType]['pixelsPosition']
+			telGrp["group"].attrs["injTable"]=telDict[telType]['injTable']
+			telGrp["group"].attrs["nbRow"]=telDict[telType]['nbRow']
+			telGrp["group"].attrs["nbCol"]=telDict[telType]['nbCol']
 			hdf5StuctureDict[telType] = telGrp
 		# Shower simulation data
 		showerSimuGrp = gammaHdf.create_group("showerSimu")
-		showerDataAltitude = showerSimuGrp.create_dataset('altitude',data=altitude,maxshape=(None,),dtype=np.float32)
-		showerDataAzimuth = showerSimuGrp.create_dataset('azimuth',data=azimuth,maxshape=(None,),dtype=np.float32)
-		showerDataCmax = showerSimuGrp.create_dataset('cmax',data=cmax,maxshape=(None,),dtype=np.float32)
-		showerDataDepthStart = showerSimuGrp.create_dataset('depthStart',data=depthStart,maxshape=(None,),dtype=np.float32)
-		showerDataEmax = showerSimuGrp.create_dataset('emax',data=emax,maxshape=(None,),dtype=np.float32)
-		showerDataEnergy = showerSimuGrp.create_dataset('energy',data=energy,maxshape=(None,),dtype=np.float32)
-		showerDataHeight = showerSimuGrp.create_dataset('heightFirstInteraction',data=heightFirstInteraction,maxshape=(None,),dtype=np.float32)
-		showerDataHmax = showerSimuGrp.create_dataset('hmax',data=hmax,maxshape=(None,),dtype=np.float32)
-		showerDataShowerId = showerSimuGrp.create_dataset('showerId',data=showerId,maxshape=(None,),dtype=np.uint64)
-		showerDataParticleType = showerSimuGrp.create_dataset('particleType',data=particleType,maxshape=(None,),dtype=np.int32)
-		showerDataXmax = showerSimuGrp.create_dataset('xmax',data=xmax,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('altitude',data=altitude,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('azimuth',data=azimuth,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('cmax',data=cmax,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('depthStart',data=depthStart,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('emax',data=emax,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('energy',data=energy,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('heightFirstInteraction',data=heightFirstInteraction,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('hmax',data=hmax,maxshape=(None,),dtype=np.float32)
+		showerSimuGrp.create_dataset('showerId',data=showerId,maxshape=(None,),dtype=np.uint64)
+		showerSimuGrp.create_dataset('particleType',data=particleType,maxshape=(None,),dtype=np.int32)
+		showerSimuGrp.create_dataset('xmax',data=xmax,maxshape=(None,),dtype=np.float32)
 		# Event simulation data
 		eventSimuGrp = gammaHdf.create_group("eventSimu")
-		eventDataEventId = eventSimuGrp.create_dataset('eventId',data=eventIdSim,maxshape=(None,),dtype=np.uint64)
-		eventDataShowerId = eventSimuGrp.create_dataset('showerId',data=showerIdSim,maxshape=(None,),dtype=np.uint64)
-		eventDataXCore = eventSimuGrp.create_dataset('xCore',data=xCore,maxshape=(None,),dtype=np.float32)
-		eventDataYCore = eventSimuGrp.create_dataset('yCore',data=yCore,maxshape=(None,),dtype=np.float32)
+		eventSimuGrp.create_dataset('eventId',data=eventIdSim,maxshape=(None,),dtype=np.uint64)
+		eventSimuGrp.create_dataset('showerId',data=showerIdSim,maxshape=(None,),dtype=np.uint64)
+		eventSimuGrp.create_dataset('xCore',data=xCore,maxshape=(None,),dtype=np.float32)
+		eventSimuGrp.create_dataset('yCore',data=yCore,maxshape=(None,),dtype=np.float32)
 		# Telescope Infos
 		telInfos = gammaHdf.create_group("telescopeInfos")
-		telescopeInfoId = telInfos.create_dataset('telescopeId',data=telId,dtype=np.uint64)
-		telescopeInfoPosition = telInfos.create_dataset('telescopePosition',data=telPosition,dtype=np.float32)
-		telescopeInfoFocal = telInfos.create_dataset('telescopeFocal',data=telFocal,dtype=np.float32)
+		telInfos.create_dataset('telescopeId',data=telId,dtype=np.uint64)
+		telInfos.create_dataset('telescopePosition',data=telPosition,dtype=np.float32)
+		telInfos.create_dataset('telescopeFocal',data=telFocal,dtype=np.float32)
 
 	gammaHdf.close()
 

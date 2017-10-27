@@ -6,6 +6,8 @@ from hipecta import core
 import numpy as np
 import h5py
 
+import argparse
+
 #import from hipecta.data import ctaloadfiles as cd
 
 
@@ -160,7 +162,7 @@ def CTAToHdf5(pr, ps, hdf5filename, telescopeTypeDict):
     else:
         gammaHdf = h5py.File(hdf5filename,'w')
 
-        gammaHdf.attrs['particleType']=set(particleType)
+        gammaHdf.attrs['particleType']=particleType[0]
         # Create hdf5 structure with datasets
         # Telescope data
         for telType in telescopeType:
@@ -264,9 +266,19 @@ def energyband_extractor(pcalibrun_filename, psimu_filename, emin, emax):
     """
 
 # Example of use. Need to define the way to get the file names
-pruncalibfilename = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/gamma_20deg_0deg_run4514___cta-prod3_desert-2150m-Paranal-merged.pcalibRun'
-simufilename = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/gamma_20deg_0deg_run4514___cta-prod3_desert-2150m-Paranal-merged.psimu'
-hdf5filename = '/home/jacquemont/projets_CTA/gamma.hdf5'
+# pruncalibfilename = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/gamma_20deg_0deg_run4514___cta-prod3_desert-2150m-Paranal-merged.pcalibRun'
+# simufilename = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/gamma_20deg_0deg_run4514___cta-prod3_desert-2150m-Paranal-merged.psimu'
+# hdf5filename = '/home/jacquemont/projets_CTA/gamma.hdf5'
+
+parser = argparse.ArgumentParser()
+parser.add_argument("pcalibrunfile", help="pcalibrun file name to read")
+parser.add_argument("psimulation", help="psimulation file name to read")
+parser.add_argument("hdf5file", help="hdf5 file name to write")
+args = parser.parse_args()
+pruncalibfilename = args.pcalibrunfile
+simufilename = args.psimulation
+hdf5filename = args.hdf5file
+
 telescopeTypeDict = {0:'DRAGON', 1:'NECTAR', 2:'FLASH', 3:'SCT', 4:'ASTRI', 5:'DC', 6:'GCT'}
 
 pr, ps = loadCTAData(pruncalibfilename, simufilename)

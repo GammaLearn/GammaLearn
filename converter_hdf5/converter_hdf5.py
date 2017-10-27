@@ -68,44 +68,61 @@ def CTAToHdf5(pr, ps, hdf5filename, telescopeTypeDict):
         """
 
     # Fetch data from pcalibrun & psimu files
-    # Shower simulation data
-    altitude = np.array([sh.altitude for sh in ps.tabSimuShower])
-    azimuth = np.array([sh.azimuth for sh in ps.tabSimuShower])
-    cmax = np.array([sh.cmax for sh in ps.tabSimuShower])
-    depthStart = np.array([sh.depthStart for sh in ps.tabSimuShower])
-    emax = np.array([sh.emax for sh in ps.tabSimuShower])
-    energy = np.array([sh.energy for sh in ps.tabSimuShower])
-    heightFirstInteraction = np.array([sh.heightFirstInteraction for sh in ps.tabSimuShower])
-    hmax = np.array([sh.hmax for sh in ps.tabSimuShower])
-    showerId = np.array([sh.id for sh in ps.tabSimuShower])
-    particleType = np.array([sh.particleType for sh in ps.tabSimuShower])
-    xmax = np.array([sh.xmax for sh in ps.tabSimuShower])
-
     # Event simulation data
     eventIdSim = np.array([ev.id for ev in ps.tabSimuEvent])
     showerIdSim = np.array([ev.showerNum for ev in ps.tabSimuEvent])
     xCore = np.array([ev.xCore for ev in ps.tabSimuEvent])
     yCore = np.array([ev.yCore for ev in ps.tabSimuEvent])
 
-    # Telescope infos
-    telId = np.array([tel.telescopeId for tel in pr.tabTelescope])
-    telPosition = np.array([posTel for posTel in pr.header.tabPosTel])
-    telFocal = np.array([focalTel for focalTel in pr.header.tabFocalTel])
-
     # Telescope data
     telescopeType = set([tel.telescopeType for tel in pr.tabTelescope])
     telDict = {}
+    eventCounter = []
     for telType in telescopeType:
         telDict[telType] = {}
         # Telescope event data
         telDict[telType]['images'] = np.array([event.tabPixel for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent])
-        telDict[telType]['eventId'] = np.array([event.eventId for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent])
+        telDict[telType]['eventId'] = [event.eventId for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent]
+        eventCounter = eventCounter + telDict[telType]['eventId']
+        telDict[telType]['eventId'] = np.array(telDict[telType]['eventId'])
         telDict[telType]['telescopeId'] =  np.array([tel.telescopeId for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent])
         telDict[telType]['pixelsPosition'] = [tel.tabPos.tabPixelPosXY for tel in pr.tabTelescope if tel.telescopeType == telType][0]
         # Add matrix form images
         telDict[telType]['injTable'], telDict[telType]['nbRow'], telDict[telType]['nbCol'] = core.createAutoInjunctionTable(telDict[telType]['pixelsPosition'])
         # Add shower id
-        telDict[telType]['showerId'] = np.array([showerIdSim[np.where(eventIdSim==ev)] for ev in telDict[telType]['eventId']])
+        telDict[telType]['showerId'] = np.squeeze(np.array([showerIdSim[np.where(eventIdSim==ev)] for ev in telDict[telType]['eventId']]))
+    eventSet = set(eventCounter)
+
+    # We only keep simulation data for detected event (telescope event)
+    # Event simulation data
+    idx = [np.where(eventIdSim == ev) for ev in eventSet]
+    showerIdSim = showerIdSim[idx]
+    showerIdSim = np.squeeze(showerIdSim)
+    xCore = xCore[idx]
+    xCore = np.squeeze(xCore)
+    yCore = yCore[idx]
+    yCore = np.squeeze(yCore)
+    eventIdSim = eventIdSim[idx]
+    eventIdSim = np.squeeze(eventIdSim)
+
+    # Shower simulation data
+    altitude = np.array([sh.altitude for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    azimuth = np.array([sh.azimuth for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    cmax = np.array([sh.cmax for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    depthStart = np.array([sh.depthStart for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    emax = np.array([sh.emax for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    energy = np.array([sh.energy for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    heightFirstInteraction = np.array([sh.heightFirstInteraction for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    hmax = np.array([sh.hmax for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    showerId = np.array([sh.id for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    particleType = np.array([sh.particleType for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    xmax = np.array([sh.xmax for sh in ps.tabSimuShower if sh.id in showerIdSim])
+
+    # Telescope infos
+    telId = np.array([tel.telescopeId for tel in pr.tabTelescope])
+    telPosition = np.array([posTel for posTel in pr.header.tabPosTel])
+    telFocal = np.array([focalTel for focalTel in pr.header.tabFocalTel])
+
 
     # Write data to hdf5 file
     # Prepare hdf5 object
@@ -146,8 +163,6 @@ def CTAToHdf5(pr, ps, hdf5filename, telescopeTypeDict):
         showerDataHmax = addDataToDataset(showerDataHmax, hmax)
         showerDataShowerId = gammaHdf['/showerSimu/showerId']
         showerDataShowerId = addDataToDataset(showerDataShowerId,showerId)
-        showerDataParticleType = gammaHdf['/showerSimu/particleType']
-        showerDataParticleType = addDataToDataset(showerDataParticleType, particleType)
         showerDataXmax = gammaHdf['/showerSimu/xmax']
         showerDataXmax = addDataToDataset(showerDataXmax, xmax)
         # Event simulation data
@@ -168,7 +183,7 @@ def CTAToHdf5(pr, ps, hdf5filename, telescopeTypeDict):
         for telType in telescopeType:
             telGrp = {}
             telGrp["group"] = gammaHdf.create_group(telescopeTypeDict[telType])
-            telGrp["group"].create_dataset("showerId",data=telDict[telType]['showerId'], maxshape=(None,1),dtype=np.uint64)
+            telGrp["group"].create_dataset("showerId",data=telDict[telType]['showerId'], maxshape=(None,),dtype=np.uint64)
             maxshape = (None,) + telDict[telType]['images'].shape[1:]
             telGrp["group"].create_dataset("images",data=telDict[telType]['images'], maxshape=maxshape,dtype=np.float32)
             telGrp["group"].create_dataset("eventId",data=telDict[telType]['eventId'],maxshape=(None,),dtype=np.uint64)

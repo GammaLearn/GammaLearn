@@ -14,7 +14,7 @@ import hashlib
 
 version = "1.0"
 
-def loadCTAData(pruncalibfilename, simufilename):
+def load_cta_data(pruncalibfilename, simufilename):
     """
         Just load a calibrated prun file and a simulation file (should be related)
         Might be replaced later with generic functions from hipecta
@@ -38,7 +38,7 @@ def loadCTAData(pruncalibfilename, simufilename):
     shaPs = hashlib.sha1(os.path.basename(simufilename).encode('utf8')).hexdigest()
     return pr, ps, shaPr, shaPs
 
-def addDataToDataset(dataset,data):
+def add_data_to_dataset(dataset,data):
     """
         Add data to an existing hdf5 resizable dataset
         Parameters
@@ -50,9 +50,9 @@ def addDataToDataset(dataset,data):
         -------
         dataset: hdf5 dataset
     """
-    rowCount = dataset.shape[0]
-    dataset.resize(rowCount+data.shape[0], axis=0)
-    dataset[rowCount:]=data
+    row_count = dataset.shape[0]
+    dataset.resize(row_count+data.shape[0], axis=0)
+    dataset[row_count:]=data
     return dataset
 
 # def fetchSimulationData(tabToFetch, itemToFetch):
@@ -61,7 +61,7 @@ def addDataToDataset(dataset,data):
 #         simDict[item] = np.array([eval('simu.'+item) for simu in tabToFetch])
 #     return simDict
 
-def CTAToHdf5( pruncalibfilename, simufilename, hdf5filename, telescopeTypeDict):
+def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename, telescope_type_dict):
     """
         Convert telescope and simulation data to hdf5 and write them in a hdf5 file
         Might be replaced later with generic functions from hipecta
@@ -70,222 +70,222 @@ def CTAToHdf5( pruncalibfilename, simufilename, hdf5filename, telescopeTypeDict)
         pr: PCalibRun object
         ps: PSimulation object
         hdf5filename: string
-        telescopeTypeDict: dictionary
+        telescope_type_dict: dictionary
 
         """
     # Load Data
-    pr, ps, shaPr, shaPs = loadCTAData(pruncalibfilename, simufilename)
+    pr, ps, shaPr, shaPs = load_cta_data(pruncalibfilename, simufilename)
     prfilename = os.path.basename(pruncalibfilename)
     psfilename = os.path.basename(simufilename)
     # Fetch data from pcalibrun & psimu files
     # Event simulation data
-    eventIdSim = np.array([ev.id for ev in ps.tabSimuEvent])
-    showerIdSim = np.array([ev.showerNum for ev in ps.tabSimuEvent])
+    event_id_sim = np.array([ev.id for ev in ps.tabSimuEvent])
+    shower_id_sim = np.array([ev.showerNum for ev in ps.tabSimuEvent])
     xCore = np.array([ev.xCore for ev in ps.tabSimuEvent])
     yCore = np.array([ev.yCore for ev in ps.tabSimuEvent])
 
     # Telescope direction
     # the same for each in simulation, should be modified for real data
-    telAzimuth = pr.header.azimuth
-    telAltitude = pr.header.altitude
+    tel_azimuth = pr.header.azimuth
+    tel_altitude = pr.header.altitude
 
     # Telescope data
-    telescopeType = set([tel.telescopeType for tel in pr.tabTelescope])
-    telDict = {}
-    eventCounter = []
-    for telType in telescopeType:
-        telDict[telType] = {}
+    telescope_type = set([tel.telescopeType for tel in pr.tabTelescope])
+    tel_dict = {}
+    event_counter = []
+    for tel_type in telescope_type:
+        tel_dict[tel_type] = {}
         # Telescope event data
-        telDict[telType]['images'] = np.array([event.tabPixel for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent])
-        telDict[telType]['eventId'] = [event.eventId for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent]
-        eventCounter = eventCounter + telDict[telType]['eventId']
-        telDict[telType]['eventId'] = np.array(telDict[telType]['eventId'])
-        telDict[telType]['telescopeId'] =  np.array([tel.telescopeId for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent])
-        telDict[telType]['pixelsPosition'] = [tel.tabPos.tabPixelPosXY for tel in pr.tabTelescope if tel.telescopeType == telType][0]
+        tel_dict[tel_type]['images'] = np.array([event.tabPixel for tel in pr.tabTelescope if tel.telescopeType == tel_type for event in tel.tabTelEvent])
+        tel_dict[tel_type]['eventId'] = [event.eventId for tel in pr.tabTelescope if tel.telescopeType == tel_type for event in tel.tabTelEvent]
+        event_counter = event_counter + tel_dict[tel_type]['eventId']
+        tel_dict[tel_type]['eventId'] = np.array(tel_dict[tel_type]['eventId'])
+        tel_dict[tel_type]['telescopeId'] =  np.array([tel.telescopeId for tel in pr.tabTelescope if tel.telescopeType == tel_type for event in tel.tabTelEvent])
+        tel_dict[tel_type]['pixelsPosition'] = [tel.tabPos.tabPixelPosXY for tel in pr.tabTelescope if tel.telescopeType == tel_type][0]
         # Add matrix form images
-        telDict[telType]['injTable'], telDict[telType]['nbRow'], telDict[telType]['nbCol'] = core.createAutoInjunctionTable(telDict[telType]['pixelsPosition'])
+        tel_dict[tel_type]['injTable'], tel_dict[tel_type]['nbRow'], tel_dict[tel_type]['nbCol'] = core.createAutoInjunctionTable(tel_dict[tel_type]['pixelsPosition'])
         # Add shower id
-        telDict[telType]['showerId'] = np.squeeze(np.array([showerIdSim[np.where(eventIdSim==ev)] for ev in telDict[telType]['eventId']]))
+        tel_dict[tel_type]['showerId'] = np.squeeze(np.array([shower_id_sim[np.where(event_id_sim == ev)] for ev in tel_dict[tel_type]['eventId']]))
         # Add telescope direction
-        telDict[telType]['telescopeAltitude'] = np.array([telAltitude for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent])
-        telDict[telType]['telescopeAzimuth'] = np.array([telAzimuth for tel in pr.tabTelescope if tel.telescopeType == telType for event in tel.tabTelEvent])
+        tel_dict[tel_type]['telescopeAltitude'] = np.array([tel_altitude for tel in pr.tabTelescope if tel.telescopeType == tel_type for event in tel.tabTelEvent])
+        tel_dict[tel_type]['telescopeAzimuth'] = np.array([tel_azimuth for tel in pr.tabTelescope if tel.telescopeType == tel_type for event in tel.tabTelEvent])
 
-    eventSet = set(eventCounter)
+    event_set = set(event_counter)
 
     # We only keep simulation data for detected event (telescope event)
     # Event simulation data
-    idx = [np.where(eventIdSim == ev) for ev in eventSet]
-    showerIdSim = showerIdSim[idx]
-    showerIdSim = np.squeeze(showerIdSim)
+    idx = [np.where(event_id_sim == ev) for ev in event_set]
+    shower_id_sim = shower_id_sim[idx]
+    shower_id_sim = np.squeeze(shower_id_sim)
     xCore = xCore[idx]
     xCore = np.squeeze(xCore)
     yCore = yCore[idx]
     yCore = np.squeeze(yCore)
-    eventIdSim = eventIdSim[idx]
-    eventIdSim = np.squeeze(eventIdSim)
+    event_id_sim = event_id_sim[idx]
+    event_id_sim = np.squeeze(event_id_sim)
 
     # Shower simulation data
-    altitude = np.array([sh.altitude for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    azimuth = np.array([sh.azimuth for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    cmax = np.array([sh.cmax for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    depthStart = np.array([sh.depthStart for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    emax = np.array([sh.emax for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    energy = np.array([sh.energy for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    heightFirstInteraction = np.array([sh.heightFirstInteraction for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    hmax = np.array([sh.hmax for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    showerId = np.array([sh.id for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    particleType = np.array([sh.particleType for sh in ps.tabSimuShower if sh.id in showerIdSim])
-    xmax = np.array([sh.xmax for sh in ps.tabSimuShower if sh.id in showerIdSim])
+    altitude = np.array([sh.altitude for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    azimuth = np.array([sh.azimuth for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    cmax = np.array([sh.cmax for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    depthStart = np.array([sh.depthStart for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    emax = np.array([sh.emax for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    energy = np.array([sh.energy for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    heightFirstInteraction = np.array([sh.heightFirstInteraction for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    hmax = np.array([sh.hmax for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    showerId = np.array([sh.id for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    particleType = np.array([sh.particleType for sh in ps.tabSimuShower if sh.id in shower_id_sim])
+    xmax = np.array([sh.xmax for sh in ps.tabSimuShower if sh.id in shower_id_sim])
 
     # Telescope infos
-    telId = np.array([tel.telescopeId for tel in pr.tabTelescope])
-    telPosition = np.array([posTel for posTel in pr.header.tabPosTel])
-    telFocal = np.array([focalTel for focalTel in pr.header.tabFocalTel])
+    tel_id = np.array([tel.telescopeId for tel in pr.tabTelescope])
+    tel_position = np.array([posTel for posTel in pr.header.tabPosTel])
+    tel_focal = np.array([focalTel for focalTel in pr.header.tabFocalTel])
 
     # Write data to hdf5 file
     # Prepare hdf5 object
-    hdf5StuctureDict = {}
+    hdf5_structure_dict = {}
 
     if os.path.isfile(hdf5filename):
-        gammaHdf = h5py.File(hdf5filename,'r+')
+        hdf5_file = h5py.File(hdf5filename,'r+')
         # Load hdf5 file datasets
-        fileConverterVersion = gammaHdf.attrs['converter_version']
-        gammaHdf['pcalibrun_files'].attrs[shaPr]= prfilename
-        gammaHdf['psimu_files'].attrs[shaPs]= psfilename
+        fileConverterVersion = hdf5_file.attrs['converter_version']
+        hdf5_file['pcalibrun_files'].attrs[shaPr]= prfilename
+        hdf5_file['psimu_files'].attrs[shaPs]= psfilename
         # Telescope data
-        for telType in telescopeType:
-            telGrp = {}
-            group = 'Cameras/' + telescopeTypeDict[telType]
-            telGrp["showerId"] = gammaHdf[group + '/showerId']
-            telGrp["showerId"] = addDataToDataset(telGrp["showerId"], telDict[telType]['showerId'])
-            telGrp["images"] = gammaHdf[group + '/images']
-            telGrp["images"] = addDataToDataset(telGrp["images"], telDict[telType]['images'])
-            telGrp["eventId"] = gammaHdf[group + '/eventId']
-            idStart = len(telGrp["eventId"])
-            telGrp["eventId"] = addDataToDataset(telGrp["eventId"], telDict[telType]['eventId'])
-            idEnd = len(telGrp["eventId"])-1
-            telGrp["telescopeId"] = gammaHdf[group + '/telescopeId']
-            telGrp["telescopeId"] = addDataToDataset(telGrp["telescopeId"], telDict[telType]['telescopeId'])
-            telGrp["telescopeAltitude"] = gammaHdf[group + '/telescopeAltitude']
-            telGrp["telescopeAltitude"] = addDataToDataset(telGrp["telescopeAltitude"], telDict[telType]['telescopeAltitude'])
-            telGrp["telescopeAzimuth"] = gammaHdf[group + '/telescopeAzimuth']
-            telGrp["telescopeAzimuth"] = addDataToDataset(telGrp["telescopeAzimuth"], telDict[telType]['telescopeAzimuth'])
-            gammaHdf[group + "/pcalibrun_files"].attrs[shaPr] = [idStart, idEnd]
-            hdf5StuctureDict[telType] = telGrp
+        for tel_type in telescope_type:
+            tel_grp = {}
+            group = 'Cameras/' + telescope_type_dict[tel_type]
+            tel_grp["showerId"] = hdf5_file[group + '/showerId']
+            tel_grp["showerId"] = add_data_to_dataset(tel_grp["showerId"], tel_dict[tel_type]['showerId'])
+            tel_grp["images"] = hdf5_file[group + '/images']
+            tel_grp["images"] = add_data_to_dataset(tel_grp["images"], tel_dict[tel_type]['images'])
+            tel_grp["eventId"] = hdf5_file[group + '/eventId']
+            idStart = len(tel_grp["eventId"])
+            tel_grp["eventId"] = add_data_to_dataset(tel_grp["eventId"], tel_dict[tel_type]['eventId'])
+            idEnd = len(tel_grp["eventId"])-1
+            tel_grp["telescopeId"] = hdf5_file[group + '/telescopeId']
+            tel_grp["telescopeId"] = add_data_to_dataset(tel_grp["telescopeId"], tel_dict[tel_type]['telescopeId'])
+            tel_grp["telescopeAltitude"] = hdf5_file[group + '/telescopeAltitude']
+            tel_grp["telescopeAltitude"] = add_data_to_dataset(tel_grp["telescopeAltitude"], tel_dict[tel_type]['telescopeAltitude'])
+            tel_grp["telescopeAzimuth"] = hdf5_file[group + '/telescopeAzimuth']
+            tel_grp["telescopeAzimuth"] = add_data_to_dataset(tel_grp["telescopeAzimuth"], tel_dict[tel_type]['telescopeAzimuth'])
+            hdf5_file[group + "/pcalibrun_files"].attrs[shaPr] = [idStart, idEnd]
+            hdf5_structure_dict[tel_type] = tel_grp
         # Shower simulation data
-        showerDataAltitude = gammaHdf['/showerSimu/altitude']
-        showerDataAltitude = addDataToDataset(showerDataAltitude, altitude)
-        showerDataAzimuth = gammaHdf['/showerSimu/azimuth']
-        showerDataAzimuth = addDataToDataset(showerDataAzimuth, azimuth)
-        showerDataCmax = gammaHdf['/showerSimu/cmax']
-        showerDataCmax = addDataToDataset(showerDataCmax, cmax)
-        showerDataDepthStart = gammaHdf['/showerSimu/depthStart']
-        showerDataDepthStart = addDataToDataset(showerDataDepthStart, depthStart)
-        showerDataEmax = gammaHdf['/showerSimu/emax']
-        showerDataEmax = addDataToDataset(showerDataEmax, emax)
-        showerDataEnergy = gammaHdf['/showerSimu/energy']
-        showerDataEnergy = addDataToDataset(showerDataEnergy, energy)
-        showerDataHeight = gammaHdf['/showerSimu/heightFirstInteraction']
-        showerDataHeight = addDataToDataset(showerDataHeight, heightFirstInteraction)
-        showerDataHmax = gammaHdf['/showerSimu/hmax']
-        showerDataHmax = addDataToDataset(showerDataHmax, hmax)
-        showerDataShowerId = gammaHdf['/showerSimu/showerId']
-        idStartShower = len(showerDataShowerId)
-        showerDataShowerId = addDataToDataset(showerDataShowerId,showerId)
-        idEndShower = len(showerDataShowerId)-1
-        showerDataXmax = gammaHdf['/showerSimu/xmax']
-        showerDataXmax = addDataToDataset(showerDataXmax, xmax)
-        gammaHdf['/showerSimu/psimu_files'].attrs[shaPs] = [idStartShower, idEndShower]
+        shower_data_altitude = hdf5_file['/showerSimu/altitude']
+        shower_data_altitude = add_data_to_dataset(shower_data_altitude, altitude)
+        shower_data_azimuth = hdf5_file['/showerSimu/azimuth']
+        shower_data_azimuth = add_data_to_dataset(shower_data_azimuth, azimuth)
+        shower_data_cmax = hdf5_file['/showerSimu/cmax']
+        shower_data_cmax = add_data_to_dataset(shower_data_cmax, cmax)
+        shower_data_depthStart = hdf5_file['/showerSimu/depthStart']
+        shower_data_depthStart = add_data_to_dataset(shower_data_depthStart, depthStart)
+        shower_data_emax = hdf5_file['/showerSimu/emax']
+        shower_data_emax = add_data_to_dataset(shower_data_emax, emax)
+        shower_data_energy = hdf5_file['/showerSimu/energy']
+        shower_data_energy = add_data_to_dataset(shower_data_energy, energy)
+        shower_data_height = hdf5_file['/showerSimu/heightFirstInteraction']
+        shower_data_height = add_data_to_dataset(shower_data_height, heightFirstInteraction)
+        shower_data_hmax = hdf5_file['/showerSimu/hmax']
+        shower_data_hmax = add_data_to_dataset(shower_data_hmax, hmax)
+        shower_data_showerId = hdf5_file['/showerSimu/showerId']
+        id_start_shower = len(shower_data_showerId)
+        shower_data_showerId = add_data_to_dataset(shower_data_showerId,showerId)
+        id_end_shower = len(shower_data_showerId)-1
+        showerDataXmax = hdf5_file['/showerSimu/xmax']
+        showerDataXmax = add_data_to_dataset(showerDataXmax, xmax)
+        hdf5_file['/showerSimu/psimu_files'].attrs[shaPs] = [id_start_shower, id_end_shower]
         # Event simulation data
-        eventDataEventId = gammaHdf['/eventSimu/eventId']
-        idStartEvent = len(eventDataEventId)
-        eventDataEventId = addDataToDataset(eventDataEventId, eventIdSim)
-        idEndEvent = len(eventDataEventId)-1
-        eventDataShowerId = gammaHdf['/eventSimu/showerId']
-        eventDataShowerId = addDataToDataset(eventDataShowerId, showerIdSim)
-        eventDataXCore = gammaHdf['/eventSimu/xCore']
-        eventDataXCore = addDataToDataset(eventDataXCore, xCore)
-        eventDataYCore = gammaHdf['/eventSimu/yCore']
-        eventDataYCore = addDataToDataset(eventDataYCore, yCore)
-        gammaHdf['/eventSimu/psimu_files'].attrs[shaPs] = [idStartEvent, idEndEvent]
+        event_data_eventId = hdf5_file['/eventSimu/eventId']
+        id_start_event = len(event_data_eventId)
+        event_data_eventId = add_data_to_dataset(event_data_eventId, event_id_sim)
+        id_end_event = len(event_data_eventId)-1
+        event_dataShowerId = hdf5_file['/eventSimu/showerId']
+        event_dataShowerId = add_data_to_dataset(event_dataShowerId, shower_id_sim)
+        event_data_xCore = hdf5_file['/eventSimu/xCore']
+        event_data_xCore = add_data_to_dataset(event_data_xCore, xCore)
+        event_data_yCore = hdf5_file['/eventSimu/yCore']
+        event_data_yCore = add_data_to_dataset(event_data_yCore, yCore)
+        hdf5_file['/eventSimu/psimu_files'].attrs[shaPs] = [id_start_event, id_end_event]
     else:
-        gammaHdf = h5py.File(hdf5filename,'w')
+        hdf5_file = h5py.File(hdf5filename,'w')
 
-        gammaHdf.attrs['particleType']=particleType[0]
-        gammaHdf.attrs['converter_version']=version
-        gammaHdf.attrs['HDF5_version']=h5py.version.hdf5_version
-        gammaHdf.attrs['h5py_version']=h5py.version.version
-        pcalibrun = gammaHdf.create_group('pcalibrun_files')
+        hdf5_file.attrs['particleType']=particleType[0]
+        hdf5_file.attrs['converter_version']=version
+        hdf5_file.attrs['HDF5_version']=h5py.version.hdf5_version
+        hdf5_file.attrs['h5py_version']=h5py.version.version
+        pcalibrun = hdf5_file.create_group('pcalibrun_files')
         pcalibrun.attrs[shaPr]=prfilename
-        psimu = gammaHdf.create_group('psimu_files')
+        psimu = hdf5_file.create_group('psimu_files')
         psimu.attrs[shaPs]=psfilename
 
         # Create hdf5 structure with datasets
         # Telescope data
-        cameras = gammaHdf.create_group('Cameras')
-        for telType in telescopeType:
-            telGrp = {}
-            telGrp["group"] = cameras.create_group(telescopeTypeDict[telType])
-            telGrp["files"] = telGrp["group"].create_group("pcalibrun_files")
-            telGrp["group"].create_dataset("showerId",data=telDict[telType]['showerId'], maxshape=(None,),dtype=np.uint64)
-            maxshape = (None,) + telDict[telType]['images'].shape[1:]
-            telGrp["group"].create_dataset("images",data=telDict[telType]['images'], maxshape=maxshape,dtype=np.float32)
-            telGrp["group"].create_dataset("eventId",data=telDict[telType]['eventId'],maxshape=(None,),dtype=np.uint64)
-            telGrp["group"].create_dataset("telescopeId",data=telDict[telType]['telescopeId'],maxshape=(None,),dtype=np.uint64)
-            telGrp["group"].create_dataset("telescopeAltitude", data=telDict[telType]['telescopeAltitude'], maxshape=(None,),dtype=np.float32)
-            telGrp["group"]["telescopeAltitude"].attrs["units"] = "rad"
-            telGrp["group"].create_dataset("telescopeAzimuth", data=telDict[telType]['telescopeAzimuth'], maxshape=(None,), dtype=np.float32)
-            telGrp["group"]["telescopeAzimuth"].attrs["units"] = "rad"
-            telGrp["group"].attrs["pixelsPosition"]=telDict[telType]['pixelsPosition']
-            telGrp["group"].attrs["injTable"]=telDict[telType]['injTable']
-            telGrp["group"].attrs["nbRow"]=telDict[telType]['nbRow']
-            telGrp["group"].attrs["nbCol"]=telDict[telType]['nbCol']
-            telGrp["files"].attrs[shaPr]=[0,len(telDict[telType]['eventId'])-1]
-            hdf5StuctureDict[telType] = telGrp
+        cameras = hdf5_file.create_group('Cameras')
+        for tel_type in telescope_type:
+            tel_grp = {}
+            tel_grp["group"] = cameras.create_group(telescope_type_dict[tel_type])
+            tel_grp["files"] = tel_grp["group"].create_group("pcalibrun_files")
+            tel_grp["group"].create_dataset("showerId",data=tel_dict[tel_type]['showerId'], maxshape=(None,),dtype=np.uint64)
+            maxshape = (None,) + tel_dict[tel_type]['images'].shape[1:]
+            tel_grp["group"].create_dataset("images",data=tel_dict[tel_type]['images'], maxshape=maxshape,dtype=np.float32)
+            tel_grp["group"].create_dataset("eventId",data=tel_dict[tel_type]['eventId'],maxshape=(None,),dtype=np.uint64)
+            tel_grp["group"].create_dataset("telescopeId",data=tel_dict[tel_type]['telescopeId'],maxshape=(None,),dtype=np.uint64)
+            tel_grp["group"].create_dataset("telescopeAltitude", data=tel_dict[tel_type]['telescopeAltitude'], maxshape=(None,),dtype=np.float32)
+            tel_grp["group"]["telescopeAltitude"].attrs["units"] = "rad"
+            tel_grp["group"].create_dataset("telescopeAzimuth", data=tel_dict[tel_type]['telescopeAzimuth'], maxshape=(None,), dtype=np.float32)
+            tel_grp["group"]["telescopeAzimuth"].attrs["units"] = "rad"
+            tel_grp["group"].attrs["pixelsPosition"]=tel_dict[tel_type]['pixelsPosition']
+            tel_grp["group"].attrs["injTable"]=tel_dict[tel_type]['injTable']
+            tel_grp["group"].attrs["nbRow"]=tel_dict[tel_type]['nbRow']
+            tel_grp["group"].attrs["nbCol"]=tel_dict[tel_type]['nbCol']
+            tel_grp["files"].attrs[shaPr]=[0,len(tel_dict[tel_type]['eventId'])-1]
+            hdf5_structure_dict[tel_type] = tel_grp
         # Shower simulation data
-        showerSimuGrp = gammaHdf.create_group("showerSimu")
-        showerSimuGrp.create_group("psimu_files")
-        showerDataAltitude = showerSimuGrp.create_dataset('altitude',data=altitude,maxshape=(None,),dtype=np.float32)
-        showerDataAltitude.attrs["units"] = "rad"
-        showerDataAzimuth = showerSimuGrp.create_dataset('azimuth',data=azimuth,maxshape=(None,),dtype=np.float32)
-        showerDataAzimuth.attrs["units"] = "rad"
-        showerSimuGrp.create_dataset('cmax',data=cmax,maxshape=(None,),dtype=np.float32)
-        showerSimuGrp.create_dataset('depthStart',data=depthStart,maxshape=(None,),dtype=np.float32)
-        showerSimuGrp.create_dataset('emax',data=emax,maxshape=(None,),dtype=np.float32)
-        showerDataEnergy = showerSimuGrp.create_dataset('energy',data=energy,maxshape=(None,),dtype=np.float32)
-        showerDataEnergy.attrs["units"] = "TeV"
-        showerDataHeight = showerSimuGrp.create_dataset('heightFirstInteraction',data=heightFirstInteraction,maxshape=(None,),dtype=np.float32)
-        showerDataHeight.attrs["units"] = "m"
-        showerSimuGrp.create_dataset('hmax',data=hmax,maxshape=(None,),dtype=np.float32)
-        showerSimuGrp.create_dataset('showerId',data=showerId,maxshape=(None,),dtype=np.uint64)
-        showerSimuGrp.create_dataset('xmax',data=xmax,maxshape=(None,),dtype=np.float32)
-        showerSimuGrp['psimu_files'].attrs[shaPs] = [0,len(showerId)]
+        shower_simu_grp = hdf5_file.create_group("showerSimu")
+        shower_simu_grp.create_group("psimu_files")
+        shower_data_altitude = shower_simu_grp.create_dataset('altitude',data=altitude,maxshape=(None,),dtype=np.float32)
+        shower_data_altitude.attrs["units"] = "rad"
+        shower_data_azimuth = shower_simu_grp.create_dataset('azimuth',data=azimuth,maxshape=(None,),dtype=np.float32)
+        shower_data_azimuth.attrs["units"] = "rad"
+        shower_simu_grp.create_dataset('cmax',data=cmax,maxshape=(None,),dtype=np.float32)
+        shower_simu_grp.create_dataset('depthStart',data=depthStart,maxshape=(None,),dtype=np.float32)
+        shower_simu_grp.create_dataset('emax',data=emax,maxshape=(None,),dtype=np.float32)
+        shower_data_energy = shower_simu_grp.create_dataset('energy',data=energy,maxshape=(None,),dtype=np.float32)
+        shower_data_energy.attrs["units"] = "TeV"
+        shower_data_height = shower_simu_grp.create_dataset('heightFirstInteraction',data=heightFirstInteraction,maxshape=(None,),dtype=np.float32)
+        shower_data_height.attrs["units"] = "m"
+        shower_simu_grp.create_dataset('hmax',data=hmax,maxshape=(None,),dtype=np.float32)
+        shower_simu_grp.create_dataset('showerId',data=showerId,maxshape=(None,),dtype=np.uint64)
+        shower_simu_grp.create_dataset('xmax',data=xmax,maxshape=(None,),dtype=np.float32)
+        shower_simu_grp['psimu_files'].attrs[shaPs] = [0,len(showerId)]
         # Event simulation data
-        eventSimuGrp = gammaHdf.create_group("eventSimu")
-        eventSimuGrp.create_group("psimu_files")
-        eventSimuGrp.create_dataset('eventId',data=eventIdSim,maxshape=(None,),dtype=np.uint64)
-        eventSimuGrp.create_dataset('showerId',data=showerIdSim,maxshape=(None,),dtype=np.uint64)
-        eventDataXCore = eventSimuGrp.create_dataset('xCore',data=xCore,maxshape=(None,),dtype=np.float32)
-        eventDataXCore.attrs["units"] = "m"
-        eventDataXCore.attrs["origin"] = "center of the site"
-        eventDataYCore = eventSimuGrp.create_dataset('yCore',data=yCore,maxshape=(None,),dtype=np.float32)
-        eventDataYCore.attrs["units"] = "m"
-        eventDataYCore.attrs["origin"] = "center of the site"
-        eventSimuGrp['psimu_files'].attrs[shaPs] = [0,len(eventIdSim)]
+        event_simu_grp = hdf5_file.create_group("eventSimu")
+        event_simu_grp.create_group("psimu_files")
+        event_simu_grp.create_dataset('eventId',data=event_id_sim,maxshape=(None,),dtype=np.uint64)
+        event_simu_grp.create_dataset('showerId',data=shower_id_sim,maxshape=(None,),dtype=np.uint64)
+        event_data_xCore = event_simu_grp.create_dataset('xCore',data=xCore,maxshape=(None,),dtype=np.float32)
+        event_data_xCore.attrs["units"] = "m"
+        event_data_xCore.attrs["origin"] = "center of the site"
+        event_data_yCore = event_simu_grp.create_dataset('yCore',data=yCore,maxshape=(None,),dtype=np.float32)
+        event_data_yCore.attrs["units"] = "m"
+        event_data_yCore.attrs["origin"] = "center of the site"
+        event_simu_grp['psimu_files'].attrs[shaPs] = [0,len(event_id_sim)]
         # Telescope Infos
-        telInfos = gammaHdf.create_group("telescopeInfos")
-        telInfos.create_group("pcalibrun_files")
-        telInfos.create_dataset('telescopeId',data=telId,dtype=np.uint64)
-        telDataPosition = telInfos.create_dataset('telescopePosition',data=telPosition,dtype=np.float32)
-        telDataPosition.attrs["units"] = "m"
-        telDataPosition.attrs["origin"] = "center of the site"
-        telInfos.create_dataset('telescopeFocal',data=telFocal,dtype=np.float32)
-        telInfos['pcalibrun_files'].attrs[shaPr] = [0, len(telId)]
+        tel_infos = hdf5_file.create_group("telescopeInfos")
+        tel_infos.create_group("pcalibrun_files")
+        tel_infos.create_dataset('telescopeId',data=tel_id,dtype=np.uint64)
+        tel_data_position = tel_infos.create_dataset('telescopePosition',data=tel_position,dtype=np.float32)
+        tel_data_position.attrs["units"] = "m"
+        tel_data_position.attrs["origin"] = "center of the site"
+        tel_infos.create_dataset('telescopeFocal',data=tel_focal,dtype=np.float32)
+        tel_infos['pcalibrun_files'].attrs[shaPr] = [0, len(tel_id)]
 
-    gammaHdf.close()
+    hdf5_file.close()
 
 
-def squeezeData(l):
+def squeeze_data(l):
     """
     Squeeze an array or a list of length 1
     Parameters
@@ -297,122 +297,123 @@ def squeezeData(l):
     variable
     """
     while isinstance(l,(np.ndarray,list)):
-        if len(l)==1:
+        if len(l) == 1:
             l = l[0]
         else:
             break
 
     return l
 
-def extractRandomImageDataFromHDF5(hdf5filename,telescopeTypeDict):
+def extract_random_image_data_from_hdf5(hdf5filename,telescope_type_dict):
     """
     Extract all the data linked to a random image from a random type of telescope
     Parameters
     ----------
     hdf5filename: string
-    telescopeTypeDict: dictionary
+    telescope_type_dict: dictionary
 
     Returns
     -------
     dictionary
     """
     with h5py.File(hdf5filename,'r') as f:
-        eventData = {}
-        camNum = np.random.choice(len(f['Cameras'].keys()))
-        camType = list(f['Cameras'].keys())[camNum]
-        cam = 'Cameras/' + camType
-        eventIndex = np.random.choice(len(f[cam+'/eventId']))
-        shaPr = [attr for attr in f[cam+'/pcalibrun_files'].attrs if (eventIndex>=f[cam+'/pcalibrun_files'].attrs[attr][0])&(eventIndex<=f[cam+'/pcalibrun_files'].attrs[attr][1])]
-        eventData['pcalibrun'] = f['/pcalibrun_files'].attrs[squeezeData(shaPr)]
-        eventData['telescopeType'] = list(telescopeTypeDict.keys())[list(telescopeTypeDict.values()).index(camType)]
-        eventData['eventId'] = f[cam+'/eventId'][eventIndex]
-        eventData['showerId'] = f[cam+'/showerId'][eventIndex]
-        showerIndex = np.where(np.array(f['showerSimu/showerId']) == eventData['showerId'])
-        showerIndex = squeezeData(list(showerIndex))
+        event_data = {}
+        cam_num = np.random.choice(len(f['Cameras'].keys()))
+        cam_type = list(f['Cameras'].keys())[cam_num]
+        cam = 'Cameras/' + cam_type
+        event_index = np.random.choice(len(f[cam+'/eventId']))
+        shaPr = [attr for attr in f[cam+'/pcalibrun_files'].attrs if (event_index >= f[cam+'/pcalibrun_files'].attrs[attr][0])&(event_index <= f[cam+'/pcalibrun_files'].attrs[attr][1])]
+        event_data['pcalibrun'] = f['/pcalibrun_files'].attrs[squeeze_data(shaPr)]
+        event_data['telescope_type'] = list(telescope_type_dict.keys())[list(telescope_type_dict.values()).index(cam_type)]
+        event_data['eventId'] = f[cam+'/eventId'][event_index]
+        event_data['showerId'] = f[cam+'/showerId'][event_index]
+        shower_index = np.where(np.array(f['showerSimu/showerId']) == event_data['showerId'])
+        shower_index = squeeze_data(list(shower_index))
         shaPs = [attr for attr in f['showerSimu/psimu_files'].attrs if
-                 (showerIndex >= f['showerSimu/psimu_files'].attrs[attr][0]) & (showerIndex <= f['showerSimu/psimu_files'].attrs[attr][1])]
-        eventData['psimu'] = f['psimu_files'].attrs[squeezeData(shaPs)]
-        eventData['image'] = f[cam+'/images'][eventIndex]
-        eventData['telescopeAltitude'] = f[cam + '/telescopeAltitude'][eventIndex]
-        eventData['telescopeAzimuth'] = f[cam + '/telescopeAzimuth'][eventIndex]
-        eventData['telescopeId'] = f[cam + '/telescopeId'][eventIndex]
-        eventData['pixelsPosition'] = np.squeeze(f[cam].attrs['pixelsPosition'])
-        eventData['xCore'] = f['eventSimu/xCore'][(np.array(f['eventSimu/showerId'])==eventData['showerId']) & (np.array(f['eventSimu/eventId'])==eventData['eventId'])]
-        eventData['yCore'] = f['eventSimu/yCore'][(np.array(f['eventSimu/showerId'])==eventData['showerId']) & (np.array(f['eventSimu/eventId'])==eventData['eventId'])]
-        eventData['hmax'] = f['showerSimu/hmax'][showerIndex]
-        eventData['xmax'] = f['showerSimu/xmax'][showerIndex]
-        eventData['cmax'] = f['showerSimu/cmax'][showerIndex]
-        eventData['azimuth'] = f['showerSimu/azimuth'][showerIndex]
-        eventData['altitude'] = f['showerSimu/altitude'][showerIndex]
-        eventData['energy'] = f['showerSimu/energy'][showerIndex]
-        eventData['heightFirstInteraction'] = f['showerSimu/heightFirstInteraction'][showerIndex]
-        eventData['emax'] = f['showerSimu/emax'][showerIndex]
-        eventData['depthStart'] = f['showerSimu/depthStart'][showerIndex]
-        eventData['telescopePosition'] = f['telescopeInfos/telescopePosition'][np.array(f['telescopeInfos/telescopeId']) == eventData['telescopeId'],:]
-        eventData['telescopeFocal'] = f['telescopeInfos/telescopeFocal'][np.array(f['telescopeInfos/telescopeId']) == eventData['telescopeId']]
+                 (shower_index >= f['showerSimu/psimu_files'].attrs[attr][0]) & (shower_index <= f['showerSimu/psimu_files'].attrs[attr][1])]
+        event_data['psimu'] = f['psimu_files'].attrs[squeeze_data(shaPs)]
+        event_data['image'] = f[cam+'/images'][event_index]
+        event_data['telescopeAltitude'] = f[cam + '/telescopeAltitude'][event_index]
+        event_data['telescopeAzimuth'] = f[cam + '/telescopeAzimuth'][event_index]
+        event_data['telescopeId'] = f[cam + '/telescopeId'][event_index]
+        event_data['pixelsPosition'] = np.squeeze(f[cam].attrs['pixelsPosition'])
+        event_data['xCore'] = f['eventSimu/xCore'][(np.array(f['eventSimu/showerId']) == event_data['showerId']) & (np.array(f['eventSimu/eventId']) == event_data['eventId'])]
+        event_data['yCore'] = f['eventSimu/yCore'][(np.array(f['eventSimu/showerId']) == event_data['showerId']) & (np.array(f['eventSimu/eventId']) == event_data['eventId'])]
+        event_data['hmax'] = f['showerSimu/hmax'][shower_index]
+        event_data['xmax'] = f['showerSimu/xmax'][shower_index]
+        event_data['cmax'] = f['showerSimu/cmax'][shower_index]
+        event_data['azimuth'] = f['showerSimu/azimuth'][shower_index]
+        event_data['altitude'] = f['showerSimu/altitude'][shower_index]
+        event_data['energy'] = f['showerSimu/energy'][shower_index]
+        event_data['heightFirstInteraction'] = f['showerSimu/heightFirstInteraction'][shower_index]
+        event_data['emax'] = f['showerSimu/emax'][shower_index]
+        event_data['depthStart'] = f['showerSimu/depthStart'][shower_index]
+        event_data['telescopePosition'] = f['telescopeInfos/telescopePosition'][np.array(f['telescopeInfos/telescopeId']) == event_data['telescopeId'],:]
+        event_data['telescopeFocal'] = f['telescopeInfos/telescopeFocal'][np.array(f['telescopeInfos/telescopeId']) == event_data['telescopeId']]
 
-        for key in list(eventData.keys()):
-            eventData[key]=squeezeData(eventData[key])
-        return eventData
+        for key in list(event_data.keys()):
+            event_data[key]=squeeze_data(event_data[key])
+        return event_data
 
-def extractImageDataFromPcalibrun(dataExtractedFromHdf5,pathTofiles):
+def extract_image_data_from_pcalibrun(data_extracted_from_hdf5,path_to_files):
     """
     Extract from origin pcalibrun and psim files the data related to those extracted from hdf5
     Then compare them
     Parameters
     ----------
-    dataExtractedFromHdf5: dictionary
+    data_extracted_from_hdf5: dictionary
+    path_to_files: string
 
     Returns
     -------
 
     """
     # Extract data
-    eventData = {}
-    eventData['pcalibrun']= dataExtractedFromHdf5['pcalibrun']
-    eventData['psimu'] = dataExtractedFromHdf5['psimu']
+    event_data = {}
+    event_data['pcalibrun'] = data_extracted_from_hdf5['pcalibrun']
+    event_data['psimu'] = data_extracted_from_hdf5['psimu']
 
-    pr, ps, shaPr, shaPs = loadCTAData(pathTofiles+eventData['pcalibrun'],pathTofiles+eventData['psimu'])
+    pr, ps, shaPr, shaPs = load_cta_data(path_to_files + event_data['pcalibrun'],path_to_files + event_data['psimu'])
 
-    eventData['eventId'] = dataExtractedFromHdf5['eventId']
-    eventData['showerId'] = dataExtractedFromHdf5['showerId']
-    eventData['telescopeId'] = dataExtractedFromHdf5['telescopeId']
-    eventData['image'] = [ev.tabPixel for tel in pr.tabTelescope if tel.telescopeId==eventData['telescopeId'] for ev in tel.tabTelEvent if ev.eventId==eventData['eventId']]
-    eventData['pixelsPosition'] = np.squeeze([tel.tabPos.tabPixelPosXY for tel in pr.tabTelescope if tel.telescopeId == eventData['telescopeId']])
-    eventData['telescopeType'] = [tel.telescopeType for tel in pr.tabTelescope if tel.telescopeId==eventData['telescopeId']]
-    eventData['telescopeAltitude'] = pr.header.altitude
-    eventData['telescopeAzimuth'] = pr.header.azimuth
-    eventData['xCore'] = [ev.xCore for ev in ps.tabSimuEvent if (ev.id==eventData['eventId']) & (ev.showerNum==eventData['showerId'])]
-    eventData['yCore'] = [ev.yCore for ev in ps.tabSimuEvent if (ev.id==eventData['eventId']) & (ev.showerNum==eventData['showerId'])]
-    eventData['hmax'] = [sh.hmax for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['xmax'] = [sh.xmax for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['cmax'] = [sh.cmax for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['azimuth'] = [sh.azimuth for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['altitude'] = [sh.altitude for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['energy'] = [sh.energy for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['heightFirstInteraction'] = [sh.heightFirstInteraction for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['emax'] = [sh.emax for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    eventData['depthStart'] = [sh.depthStart for sh in ps.tabSimuShower if sh.id==eventData['showerId']]
-    telId = np.array([tel.telescopeId for tel in pr.tabTelescope])
-    telPosition = np.array([posTel for posTel in pr.header.tabPosTel])
-    telFocal = np.array([focalTel for focalTel in pr.header.tabFocalTel])
-    eventData['telescopePosition'] = np.squeeze(telPosition[np.where(telId==eventData['telescopeId'])])
-    eventData['telescopeFocal'] = telFocal[np.where(telId==eventData['telescopeId'])]
+    event_data['eventId'] = data_extracted_from_hdf5['eventId']
+    event_data['showerId'] = data_extracted_from_hdf5['showerId']
+    event_data['telescopeId'] = data_extracted_from_hdf5['telescopeId']
+    event_data['image'] = [ev.tabPixel for tel in pr.tabTelescope if tel.telescopeId == event_data['telescopeId'] for ev in tel.tabTelEvent if ev.eventId == event_data['eventId']]
+    event_data['pixelsPosition'] = np.squeeze([tel.tabPos.tabPixelPosXY for tel in pr.tabTelescope if tel.telescopeId == event_data['telescopeId']])
+    event_data['telescope_type'] = [tel.telescopeType for tel in pr.tabTelescope if tel.telescopeId == event_data['telescopeId']]
+    event_data['telescopeAltitude'] = pr.header.altitude
+    event_data['telescopeAzimuth'] = pr.header.azimuth
+    event_data['xCore'] = [ev.xCore for ev in ps.tabSimuEvent if (ev.id == event_data['eventId']) & (ev.showerNum == event_data['showerId'])]
+    event_data['yCore'] = [ev.yCore for ev in ps.tabSimuEvent if (ev.id == event_data['eventId']) & (ev.showerNum == event_data['showerId'])]
+    event_data['hmax'] = [sh.hmax for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['xmax'] = [sh.xmax for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['cmax'] = [sh.cmax for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['azimuth'] = [sh.azimuth for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['altitude'] = [sh.altitude for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['energy'] = [sh.energy for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['heightFirstInteraction'] = [sh.heightFirstInteraction for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['emax'] = [sh.emax for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    event_data['depthStart'] = [sh.depthStart for sh in ps.tabSimuShower if sh.id == event_data['showerId']]
+    tel_id = np.array([tel.telescopeId for tel in pr.tabTelescope])
+    tel_position = np.array([posTel for posTel in pr.header.tabPosTel])
+    tel_focal = np.array([focalTel for focalTel in pr.header.tabFocalTel])
+    event_data['telescopePosition'] = np.squeeze(tel_position[np.where(tel_id == event_data['telescopeId'])])
+    event_data['telescopeFocal'] = tel_focal[np.where(tel_id == event_data['telescopeId'])]
 
-    for key in list(eventData.keys()):
-        eventData[key] = squeezeData(eventData[key])
+    for key in list(event_data.keys()):
+        event_data[key] = squeeze_data(event_data[key])
 
     # Compare data
-    for key in list(dataExtractedFromHdf5.keys()):
-        if isinstance(eventData[key],np.ndarray):
-            res = np.array_equal(eventData[key] , dataExtractedFromHdf5[key])
+    for key in list(data_extracted_from_hdf5.keys()):
+        if isinstance(event_data[key],np.ndarray):
+            res = np.array_equal(event_data[key] , data_extracted_from_hdf5[key])
         else:
-            res = eventData[key] == dataExtractedFromHdf5[key]
+            res = event_data[key] == data_extracted_from_hdf5[key]
         if res:
             print(key + ' matches')
         else:
-            print(eventData[key])
-            print(dataExtractedFromHdf5[key])
+            print(event_data[key])
+            print(data_extracted_from_hdf5[key])
             print(key + ' doesn\'t match, verification failed !')
             break
 
@@ -449,9 +450,9 @@ pruncalibfilename = args.pcalibrunfile
 simufilename = args.psimulation
 hdf5filename = args.hdf5file
 
-telescopeTypeDict = {0:'DRAGON', 1:'NECTAR', 2:'FLASH', 3:'SCT', 4:'ASTRI', 5:'DC', 6:'GCT'}
+telescope_type_dict = {0:'DRAGON', 1:'NECTAR', 2:'FLASH', 3:'SCT', 4:'ASTRI', 5:'DC', 6:'GCT'}
 
-#CTAToHdf5(pruncalibfilename, simufilename, hdf5filename, telescopeTypeDict)
-dic=extractRandomImageDataFromHDF5(hdf5filename,telescopeTypeDict)
-pathToFiles = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/'
-extractImageDataFromPcalibrun(dic,pathToFiles)
+cta_to_hdf5(pruncalibfilename, simufilename, hdf5filename, telescope_type_dict)
+dic=extract_random_image_data_from_hdf5(hdf5filename,telescope_type_dict)
+path_to_files = '/home/jacquemont/projets_CTA/Prod3b/Paranal/Gamma_point_source/'
+extract_image_data_from_pcalibrun(dic,path_to_files)

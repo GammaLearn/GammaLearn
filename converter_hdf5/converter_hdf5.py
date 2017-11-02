@@ -10,8 +10,10 @@ import argparse
 
 import hashlib
 
+import sys
 
-version = "1.0"
+
+_VERSION = "1.0"
 
 def load_cta_data(pruncalibfilename, simufilename):
     """
@@ -156,7 +158,9 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename, telescope_type_d
     if os.path.isfile(hdf5filename):
         hdf5_file = h5py.File(hdf5filename,'r+')
         # Load hdf5 file datasets
-        fileConverterVersion = hdf5_file.attrs['converter_version']
+        file_converter_version = hdf5_file.attrs['converter_version']
+        if file_converter_version != _VERSION:
+            sys.exit("Existing hdf5 file : converter version dosen't match !")
         hdf5_file['pcalibrun_files'].attrs[shaPr]= prfilename
         hdf5_file['psimu_files'].attrs[shaPs]= psfilename
         # Telescope data
@@ -219,7 +223,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename, telescope_type_d
         hdf5_file = h5py.File(hdf5filename,'w')
 
         hdf5_file.attrs['particleType']=particleType[0]
-        hdf5_file.attrs['converter_version']=version
+        hdf5_file.attrs['converter_version']=_VERSION
         hdf5_file.attrs['HDF5_version']=h5py.version.hdf5_version
         hdf5_file.attrs['h5py_version']=h5py.version.version
         pcalibrun = hdf5_file.create_group('pcalibrun_files')

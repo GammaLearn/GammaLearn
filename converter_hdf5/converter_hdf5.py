@@ -82,6 +82,8 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         if shaPr in set(hdf5_file['pcalibrun_files'].attrs):
             print("File %s already converted. Skipping" % prfilename)
             return
+        hdf5_file.close()
+        
     # Fetch data from pcalibrun & psimu files
     # Event simulation data
     event_id_sim = np.array([ev.id for ev in ps.tabSimuEvent])

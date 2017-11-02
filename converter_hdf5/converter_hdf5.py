@@ -10,7 +10,6 @@ import argparse
 
 import hashlib
 
-#import from hipecta.data import ctaloadfiles as cd
 
 version = "1.0"
 
@@ -108,6 +107,8 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename, telescope_type_d
         tel_dict[tel_type]['eventId'] = np.array(tel_dict[tel_type]['eventId'])
         tel_dict[tel_type]['telescopeId'] =  np.array([tel.telescopeId for tel in pr.tabTelescope if tel.telescopeType == tel_type for event in tel.tabTelEvent])
         tel_dict[tel_type]['pixelsPosition'] = [tel.tabPos.tabPixelPosXY for tel in pr.tabTelescope if tel.telescopeType == tel_type][0]
+        print("tel type : ", tel_type)
+        print(len(tel_dict[tel_type]['pixelsPosition']))
         # Add matrix form images
         tel_dict[tel_type]['injTable'], tel_dict[tel_type]['nbRow'], tel_dict[tel_type]['nbCol'] = core.createAutoInjunctionTable(tel_dict[tel_type]['pixelsPosition'])
         # Add shower id
@@ -242,8 +243,10 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename, telescope_type_d
             tel_grp["group"]["telescopeAltitude"].attrs["units"] = "rad"
             tel_grp["group"].create_dataset("telescopeAzimuth", data=tel_dict[tel_type]['telescopeAzimuth'], maxshape=(None,), dtype=np.float32)
             tel_grp["group"]["telescopeAzimuth"].attrs["units"] = "rad"
-            tel_grp["group"].attrs["pixelsPosition"]=tel_dict[tel_type]['pixelsPosition']
-            tel_grp["group"].attrs["injTable"]=tel_dict[tel_type]['injTable']
+            #tel_grp["group"].attrs["pixelsPosition"]=tel_dict[tel_type]['pixelsPosition']
+            #tel_grp["group"].attrs["injTable"]=tel_dict[tel_type]['injTable']
+            tel_grp["group"].create_dataset("pixelsPosition", data=tel_dict[tel_type]['pixelsPosition'], dtype=np.float32)
+            tel_grp["group"].create_dataset("injTable", data=tel_dict[tel_type]['injTable'], dtype=np.float32)
             tel_grp["group"].attrs["nbRow"]=tel_dict[tel_type]['nbRow']
             tel_grp["group"].attrs["nbCol"]=tel_dict[tel_type]['nbCol']
             tel_grp["files"].attrs[shaPr]=[0,len(tel_dict[tel_type]['eventId'])-1]
@@ -342,7 +345,7 @@ def extract_random_image_data_from_hdf5(hdf5filename,telescope_type_dict):
         event_data['telescopeAltitude'] = f[cam + '/telescopeAltitude'][event_index]
         event_data['telescopeAzimuth'] = f[cam + '/telescopeAzimuth'][event_index]
         event_data['telescopeId'] = f[cam + '/telescopeId'][event_index]
-        event_data['pixelsPosition'] = np.squeeze(f[cam].attrs['pixelsPosition'])
+        event_data['pixelsPosition'] = np.squeeze(f[cam + '/pixelsPosition'])
         event_data['xCore'] = f['eventSimu/xCore'][(np.array(f['eventSimu/showerId']) == event_data['showerId']) & (np.array(f['eventSimu/eventId']) == event_data['eventId'])]
         event_data['yCore'] = f['eventSimu/yCore'][(np.array(f['eventSimu/showerId']) == event_data['showerId']) & (np.array(f['eventSimu/eventId']) == event_data['eventId'])]
         event_data['hmax'] = f['showerSimu/hmax'][shower_index]
@@ -440,7 +443,7 @@ def browse_folder(data_folder):
     for dirname, dirnames, filenames in os.walk(data_folder):
         for file in filenames:
             filename, ext = os.path.splitext(file)
-            if ext == ".pcalibRun":
+            if ext == ".pcalibrun":
                 pcalibrun_set.add(dirname + filename)
             elif ext == ".psimu":
                 psimu_set.add(dirname + filename)
@@ -462,11 +465,11 @@ parser = argparse.ArgumentParser()
 # parser.add_argument("pcalibrunfile", help="pcalibrun file name to read")
 # parser.add_argument("psimulation", help="psimulation file name to read")
 parser.add_argument("data_folder", help="path to folder of pcalibrun and psimu files")
-parser.add_argument("hdf5file", help="hdf5 file name to write")
+parser.add_argument("hdf5file", help="hdf5 file name (including path) to write")
 args = parser.parse_args()
 #pruncalibfilename = args.pcalibrunfile
 #simufilename = args.psimulation
-data_folder = args.data_folder
+data_folder = args.data_folder + '/'
 hdf5filename = args.hdf5file
 
 telescope_type_dict = {0:'DRAGON', 1:'NECTAR', 2:'FLASH', 3:'SCT', 4:'ASTRI', 5:'DC', 6:'GCT'}
@@ -488,7 +491,7 @@ for i, chunk in enumerate(pr_chunks):
     hdf5name += ext
     for file in chunk:
         print("Convert file : ", file)
-        cta_to_hdf5(file + ".pcalibRun", file + ".psimu", hdf5name, telescope_type_dict)
+        cta_to_hdf5(file + ".pcalibrun", file + ".psimu", hdf5name, telescope_type_dict)
     # Random checking of data in hdf5 file
     print("Ckeck conversion")
     print("Extract random image data from hdf5 file : ", hdf5name)

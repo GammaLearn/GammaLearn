@@ -77,6 +77,12 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename, telescope_type_d
     pr, ps, shaPr, shaPs = load_cta_data(pruncalibfilename, simufilename)
     prfilename = os.path.basename(pruncalibfilename)
     psfilename = os.path.basename(simufilename)
+    # Check if pcalibrun file is already in hdf5
+    if os.path.isfile(hdf5filename):
+        hdf5_file = h5py.File(hdf5filename,'r')
+        if shaPr in set(hdf5_file['pcalibrun_files'].attrs):
+            print("File %s already converted. Skipping" % prfilename)
+            return
     # Fetch data from pcalibrun & psimu files
     # Event simulation data
     event_id_sim = np.array([ev.id for ev in ps.tabSimuEvent])

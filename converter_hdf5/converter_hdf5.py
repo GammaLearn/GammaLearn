@@ -83,7 +83,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
             print("File %s already converted. Skipping" % prfilename)
             return
         hdf5_file.close()
-        
+
     # Fetch data from pcalibrun & psimu files
     # Event simulation data
     event_id_sim = np.array([ev.id for ev in ps.tabSimuEvent])
@@ -109,8 +109,6 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         tel_dict[tel_type]['eventId'] = np.array(tel_dict[tel_type]['eventId'])
         tel_dict[tel_type]['telescopeId'] =  np.array([tel.telescopeId for tel in pr.tabTelescope if tel.telescopeType == tel_type for event in tel.tabTelEvent])
         tel_dict[tel_type]['pixelsPosition'] = [tel.tabPos.tabPixelPosXY for tel in pr.tabTelescope if tel.telescopeType == tel_type][0]
-        print("tel type : ", tel_type)
-        print(len(tel_dict[tel_type]['pixelsPosition']))
         # Add matrix form images
         tel_dict[tel_type]['injTable'], tel_dict[tel_type]['nbRow'], tel_dict[tel_type]['nbCol'] = core.createAutoInjunctionTable(tel_dict[tel_type]['pixelsPosition'])
         # Add shower id
@@ -174,7 +172,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
             tel_grp["eventId"] = hdf5_file[group + '/eventId']
             idStart = len(tel_grp["eventId"])
             tel_grp["eventId"] = add_data_to_dataset(tel_grp["eventId"], tel_dict[tel_type]['eventId'])
-            idEnd = len(tel_grp["eventId"])-1
+            idEnd = len(tel_grp["eventId"]) - 1
             tel_grp["telescopeId"] = hdf5_file[group + '/telescopeId']
             tel_grp["telescopeId"] = add_data_to_dataset(tel_grp["telescopeId"], tel_dict[tel_type]['telescopeId'])
             tel_grp["telescopeAltitude"] = hdf5_file[group + '/telescopeAltitude']
@@ -203,7 +201,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         shower_data_showerId = hdf5_file['/showerSimu/showerId']
         id_start_shower = len(shower_data_showerId)
         shower_data_showerId = add_data_to_dataset(shower_data_showerId,showerId)
-        id_end_shower = len(shower_data_showerId)-1
+        id_end_shower = len(shower_data_showerId) - 1
         showerDataXmax = hdf5_file['/showerSimu/xmax']
         showerDataXmax = add_data_to_dataset(showerDataXmax, xmax)
         hdf5_file['/showerSimu/psimu_files'].attrs[shaPs] = [id_start_shower, id_end_shower]
@@ -211,7 +209,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         event_data_eventId = hdf5_file['/eventSimu/eventId']
         id_start_event = len(event_data_eventId)
         event_data_eventId = add_data_to_dataset(event_data_eventId, event_id_sim)
-        id_end_event = len(event_data_eventId)-1
+        id_end_event = len(event_data_eventId) - 1
         event_dataShowerId = hdf5_file['/eventSimu/showerId']
         event_dataShowerId = add_data_to_dataset(event_dataShowerId, shower_id_sim)
         event_data_xCore = hdf5_file['/eventSimu/xCore']
@@ -272,7 +270,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         shower_simu_grp.create_dataset('hmax',data=hmax,maxshape=(None,),dtype=np.float32)
         shower_simu_grp.create_dataset('showerId',data=showerId,maxshape=(None,),dtype=np.uint64)
         shower_simu_grp.create_dataset('xmax',data=xmax,maxshape=(None,),dtype=np.float32)
-        shower_simu_grp['psimu_files'].attrs[shaPs] = [0,len(showerId)]
+        shower_simu_grp['psimu_files'].attrs[shaPs] = [0,len(showerId) - 1]
         # Event simulation data
         event_simu_grp = hdf5_file.create_group("eventSimu")
         event_simu_grp.create_group("psimu_files")
@@ -284,7 +282,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         event_data_yCore = event_simu_grp.create_dataset('yCore',data=yCore,maxshape=(None,),dtype=np.float32)
         event_data_yCore.attrs["units"] = "m"
         event_data_yCore.attrs["origin"] = "center of the site"
-        event_simu_grp['psimu_files'].attrs[shaPs] = [0,len(event_id_sim)]
+        event_simu_grp['psimu_files'].attrs[shaPs] = [0,len(event_id_sim) - 1]
         # Telescope Infos
         tel_infos = hdf5_file.create_group("telescopeInfos")
         tel_infos.create_group("pcalibrun_files")
@@ -293,7 +291,7 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         tel_data_position.attrs["units"] = "m"
         tel_data_position.attrs["origin"] = "center of the site"
         tel_infos.create_dataset('telescopeFocal',data=tel_focal,dtype=np.float32)
-        tel_infos['pcalibrun_files'].attrs[shaPr] = [0, len(tel_id)]
+        tel_infos['pcalibrun_files'].attrs[shaPr] = [0, len(tel_id) - 1]
 
     hdf5_file.close()
 

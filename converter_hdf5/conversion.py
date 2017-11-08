@@ -30,7 +30,7 @@ prlist.sort()
 chunk_size = 10
 pr_chunks = [prlist[i:i + chunk_size] for i in range(0, len(prlist), chunk_size)]
 for i, chunk in enumerate(pr_chunks):
-    print("Process chunk %d over %d" % (i, len(pr_chunks)))
+    print("Process chunk %d over %d" % (i + 1, len(pr_chunks)))
     hdf5name, ext = os.path.splitext(hdf5filename)
     hdf5name += str(i)
     hdf5name += ext
@@ -38,7 +38,7 @@ for i, chunk in enumerate(pr_chunks):
         print("Convert file : ", file)
         cv.cta_to_hdf5(file + ".pcalibrun", file + ".psimu", hdf5name)
     # Random checking of data in hdf5 file
-    print("Ckeck conversion")
+    print("Check conversion")
     print("Extract random image data from hdf5 file : ", hdf5name)
     dic = cv.extract_random_image_data_from_hdf5(hdf5name)
     print("Extract related data in pcalibrun and psimu files")

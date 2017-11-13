@@ -12,12 +12,13 @@ parser = argparse.ArgumentParser()
 # parser.add_argument("psimulation", help="psimulation file name to read")
 parser.add_argument("data_folder", help="path to folder of pcalibrun and psimu files")
 parser.add_argument("hdf5file", help="hdf5 file name (including path) to write")
+parser.add_argument('--nchunk', dest='number_chunk', default=10, type=int,
+                    help='Number of source files stacked in one HDF5 file')
 args = parser.parse_args()
-#pruncalibfilename = args.pcalibrunfile
-#simufilename = args.psimulation
+
 data_folder = args.data_folder + '/'
 hdf5filename = args.hdf5file
-
+chunk_size = args.number_chunk
 
 #cta_to_hdf5(pruncalibfilename, simufilename, hdf5filename)
 # dic=extract_random_image_data_from_hdf5(hdf5filename)
@@ -27,7 +28,7 @@ hdf5filename = args.hdf5file
 prset = cv.browse_folder(data_folder)
 prlist = list(prset)
 prlist.sort()
-chunk_size = 10
+
 pr_chunks = [prlist[i:i + chunk_size] for i in range(0, len(prlist), chunk_size)]
 for i, chunk in enumerate(pr_chunks):
     print("Process chunk %d over %d" % (i + 1, len(pr_chunks)))

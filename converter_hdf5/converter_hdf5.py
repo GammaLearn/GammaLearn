@@ -65,8 +65,8 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         Might be replaced later with generic functions from hipecta
         Parameters
         ----------
-        pr: PCalibRun object
-        ps: PSimulation object
+        pr: string
+        ps: string
         hdf5filename: string
 
         """
@@ -81,7 +81,8 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
         run_id = int(word.group(1))
         print("run id : ", run_id)
     else:
-        exit("Didn't find run id for file : " + prfilename)
+        # exit("Didn't find run id for file : " + prfilename)
+        run_id = 0
 
     # Check if pcalibrun file is already in hdf5
     if os.path.isfile(hdf5filename):
@@ -127,7 +128,8 @@ def cta_to_hdf5( pruncalibfilename, simufilename, hdf5filename):
 
     # We only keep simulation data for detected event (telescope event)
     # Event simulation data
-    idx = [np.where(event_id_sim == ev) for ev in event_set]
+    event_triggered_id = np.array([ev.eventId for tel in pr.tabTelescope for ev in tel.tabTelEvent])
+    idx = np.in1d(event_id_sim, event_triggered_id)
     shower_id_sim = shower_id_sim[idx]
     shower_id_sim = np.squeeze(shower_id_sim)
     xCore = xCore[idx]

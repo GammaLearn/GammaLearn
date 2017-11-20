@@ -1,10 +1,8 @@
 from hipecta.data import ctaTelescope2Matrix
-from hipecta import core
 import numpy as np
 import h5py
 import torch
 from torch.utils.data import Dataset
-from torchvision import transforms, utils
 from converter_hdf5 import squeeze_data
 
 
@@ -15,7 +13,7 @@ class LSTCamDataset(Dataset):
         """
         Parameters
         ----------
-            hdf5_file (string): path to hdf5 file containing the data
+            hdf5_file : hdf5 file containing the data
             transform (callable, optional): Optional transform to be applied on a sample
         """
         self.hdf5_file = hdf5_file

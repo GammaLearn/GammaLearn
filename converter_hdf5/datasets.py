@@ -74,7 +74,7 @@ class LSTCamShiftedDataset(Dataset):
         image = self.hdf5_file['images'][idx]
         telescope = self.hdf5_file['telescopes'][idx]
         labels = self.hdf5_file['labels'][idx]
-        
+
         sample = {'image': image, 'telescope': telescope, 'labels': labels}
 
         if self.transform:

@@ -143,7 +143,6 @@ class LSTNet512(nn.Module):
     def forward(self, x):
         out = self.conv1(x)
         out = self.relu1(out)
-        out = self.maxpool1(out)
         out = self.batchnorm1(out)
         out = self.conv2(out)
         out = self.relu2(out)
@@ -151,7 +150,6 @@ class LSTNet512(nn.Module):
         out = self.batchnorm2(out)
         out = self.conv3(out)
         out = self.relu3(out)
-        out = self.maxpool3(out)
         out = self.batchnorm3(out)
         out = self.conv4(out)
         out = self.relu4(out)

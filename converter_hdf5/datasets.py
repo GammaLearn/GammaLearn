@@ -54,6 +54,35 @@ class LSTCamDataset(Dataset):
         return sample
 
 
+class LSTCamShiftedDataset(Dataset):
+    """LST camera simulation dataset."""
+
+    def __init__(self, hdf5_file, transform=None):
+        """
+        Parameters
+        ----------
+            hdf5_file : hdf5 file containing the data
+            transform (callable, optional): Optional transform to be applied on a sample
+        """
+        self.hdf5_file = hdf5_file
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.hdf5_file['images'])
+
+    def __getitem__(self, idx):
+        image = self.hdf5_file['images'][idx]
+        telescope = self.hdf5_file['telescopes'][idx]
+        labels = self.hdf5_file['labels'][idx]
+
+        sample = {'image': image, 'telescope': telescope, 'labels': labels}
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
+
+
 class TelescopeToSquareMatrix(object):
     """Convert telescope image of vector shape to square matrix.
 

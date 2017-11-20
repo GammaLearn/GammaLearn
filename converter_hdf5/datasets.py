@@ -122,3 +122,10 @@ class ToTensor(object):
                 'labels': torch.from_numpy(labels).double()}
 
 
+class EnergyToLog(object):
+    """Convert energy to log(energy)"""
+
+    def __call__(self, sample):
+        image, telescope, labels = sample['image'], sample['telescope'], sample['labels']
+        labels[0] = np.log10(labels[0])
+        return {'image': image, 'telescope': telescope, 'labels': labels}

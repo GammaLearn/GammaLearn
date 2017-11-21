@@ -44,7 +44,7 @@ class LSTCamDataset(Dataset):
 
         telescope = np.array([tel_altitude, tel_azimuth, tel_position[0], tel_position[1]])
 
-        labels = np.array([energy, altitude, azimuth, xCore, yCore])
+        labels = np.array([energy, xCore, yCore, altitude, azimuth])
 
         sample = {'image': image, 'telescope': telescope, 'labels': labels}
 
